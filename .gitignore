@@ -1,0 +1,36 @@
+# Docker build artifacts
+*.tar
+*.tar.gz
+*.tgz
+unbound-cache/
+.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Test outputs
+*.log
+*.pid
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Kubernetes secrets (never commit!)
+*.key
+*.pem
+*.crt
+secrets/

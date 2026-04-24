@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  unbound:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: unbound-custom:local
+    container_name: unbound
+    hostname: unbound
+    environment:
+      TZ: "UTC"
+      UNBOUND_CONF_PATH: "/etc/unbound/unbound.conf"
+    ports:
+      - "5353:5353/tcp"
+      - "5353:5353/udp"
+    volumes:
+      # Mount custom config (override the default)
+      # - ./custom-unbound.conf:/etc/unbound/unbound.conf:ro
+      #
+      # Or mount a different path and set UNBOUND_CONF_PATH:
+      # - ./my-config.conf:/etc/unbound/custom.conf:ro
+      #
+      # Persistent cache
+      - unbound-cache:/var/lib/unbound
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "unbound-checkconf", "-c", "/etc/unbound/unbound.conf"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - dns
+
+  # Optional: Redis cache backend for Unbound (if you want to use cachedb)
+  # Uncomment and configure if needed
+  # redis:
+  #   image: redis:alpine
+  #   container_name: unbound-redis
+  #   volumes:
+  #     - redis-data:/data
+  #   networks:
+  #     - dns
+
+volumes:
+  unbound-cache:
+    driver: local
+  # redis-data:
+
+networks:
+  dns:
+    driver: bridge

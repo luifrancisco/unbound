@@ -1,0 +1,32 @@
+apiVersion: v1
+data:
+  unbound.conf: |
+    server:
+      interface: 0.0.0.0
+      interface: ::0
+      port: 53
+      access-control: 10.43.0.0/16 allow
+      access-control: 10.0.0.0/8 allow
+      access-control: 172.16.0.0/12 allow
+      access-control: 127.0.0.0/8 allow
+      access-control: ::1 allow
+      access-control: fd00:7808:88c3:90::/64 allow
+      do-not-query-localhost: no
+      cache-max-ttl: 86400
+      cache-min-ttl: 60
+      cache-max-negative-ttl: 3600
+      num-threads: 4
+      prefetch: yes
+      log-queries: no
+      log-replies: no
+      verbosity: 1
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"unbound.conf":"server:\n  interface: 0.0.0.0\n  interface: ::0\n  port: 53\n  access-control: 10.43.0.0/16 allow\n  access-control: 10.0.0.0/8 allow\n  access-control: 172.16.0.0/12 allow\n  access-control: 127.0.0.0/8 allow\n  access-control: ::1 allow\n  access-control: fd00:7808:88c3:90::/64 allow\n  do-not-query-localhost: no\n  cache-max-ttl: 86400\n  cache-min-ttl: 60\n  cache-max-negative-ttl: 3600\n  num-threads: 4\n  prefetch: yes\n  log-queries: no\n  log-replies: no\n  verbosity: 1\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"unbound-config","namespace":"unbound"}}
+  creationTimestamp: "2026-04-22T15:07:56Z"
+  name: unbound-config
+  namespace: unbound
+  resourceVersion: "46877"
+  uid: 077abc58-67aa-4b62-bff5-5c6331782257

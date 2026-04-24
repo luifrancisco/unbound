@@ -1,0 +1,224 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{},"labels":{"kubernetes.io/metadata.name":"unbound"},"name":"unbound"}}
+  creationTimestamp: "2026-04-22T15:07:56Z"
+  labels:
+    kubernetes.io/metadata.name: unbound
+  name: unbound
+  resourceVersion: "46874"
+  uid: 0ef07e5e-7667-42d4-92e0-e48e55beb3e9
+spec:
+  finalizers:
+  - kubernetes
+status:
+  phase: Active
+---
+apiVersion: v1
+data:
+  unbound.conf: |
+    server:
+      interface: 0.0.0.0
+      interface: ::0
+      port: 53
+      access-control: 10.43.0.0/16 allow
+      access-control: 10.0.0.0/8 allow
+      access-control: 172.16.0.0/12 allow
+      access-control: 127.0.0.0/8 allow
+      access-control: ::1 allow
+      access-control: fd00:7808:88c3:90::/64 allow
+      do-not-query-localhost: no
+      cache-max-ttl: 86400
+      cache-min-ttl: 60
+      cache-max-negative-ttl: 3600
+      num-threads: 4
+      prefetch: yes
+      log-queries: no
+      log-replies: no
+      verbosity: 1
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"unbound.conf":"server:\n  interface: 0.0.0.0\n  interface: ::0\n  port: 53\n  access-control: 10.43.0.0/16 allow\n  access-control: 10.0.0.0/8 allow\n  access-control: 172.16.0.0/12 allow\n  access-control: 127.0.0.0/8 allow\n  access-control: ::1 allow\n  access-control: fd00:7808:88c3:90::/64 allow\n  do-not-query-localhost: no\n  cache-max-ttl: 86400\n  cache-min-ttl: 60\n  cache-max-negative-ttl: 3600\n  num-threads: 4\n  prefetch: yes\n  log-queries: no\n  log-replies: no\n  verbosity: 1\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"unbound-config","namespace":"unbound"}}
+  creationTimestamp: "2026-04-22T15:07:56Z"
+  name: unbound-config
+  namespace: unbound
+  resourceVersion: "46877"
+  uid: 077abc58-67aa-4b62-bff5-5c6331782257
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"PersistentVolumeClaim","metadata":{"annotations":{},"name":"unbound-cache-pvc","namespace":"unbound"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"2Gi"}},"storageClassName":"local-path","volumeMode":"Filesystem"}}
+    pv.kubernetes.io/bind-completed: "yes"
+    pv.kubernetes.io/bound-by-controller: "yes"
+    volume.beta.kubernetes.io/storage-provisioner: rancher.io/local-path
+    volume.kubernetes.io/selected-node: hokkaido
+    volume.kubernetes.io/storage-provisioner: rancher.io/local-path
+  creationTimestamp: "2026-04-22T15:07:57Z"
+  finalizers:
+  - kubernetes.io/pvc-protection
+  name: unbound-cache-pvc
+  namespace: unbound
+  resourceVersion: "46919"
+  uid: ca0adc58-f5fd-4a3b-b8ff-2c23d5cbcf61
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-path
+  volumeMode: Filesystem
+  volumeName: pvc-ca0adc58-f5fd-4a3b-b8ff-2c23d5cbcf61
+status:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 2Gi
+  phase: Bound
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"unbound","namespace":"unbound"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"unbound"}},"template":{"metadata":{"labels":{"app":"unbound"}},"spec":{"containers":[{"command":["/usr/sbin/unbound","-d","-c","/etc/unbound/unbound.conf"],"env":[{"name":"TZ","value":"UTC"}],"image":"docker.io/library/unbound-custom:latest","imagePullPolicy":"Never","livenessProbe":{"failureThreshold":3,"initialDelaySeconds":15,"periodSeconds":10,"successThreshold":1,"tcpSocket":{"port":53},"timeoutSeconds":2},"name":"unbound","ports":[{"containerPort":53,"name":"dns-tcp","protocol":"TCP"},{"containerPort":53,"name":"dns-udp","protocol":"UDP"}],"readinessProbe":{"failureThreshold":3,"initialDelaySeconds":5,"periodSeconds":5,"successThreshold":1,"tcpSocket":{"port":53},"timeoutSeconds":2},"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}},"securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"add":["NET_BIND_SERVICE"],"drop":["ALL"]},"runAsGroup":101,"runAsUser":100},"volumeMounts":[{"mountPath":"/etc/unbound/unbound.conf","name":"config","subPath":"unbound.conf"},{"mountPath":"/var/lib/unbound","name":"cache"},{"mountPath":"/var/log/unbound","name":"log"}]}],"dnsPolicy":"ClusterFirst","initContainers":[{"command":["sh","-c","chown -R 100:101 /var/lib/unbound"],"image":"busybox:latest","imagePullPolicy":"Always","name":"volume-permissions","volumeMounts":[{"mountPath":"/var/lib/unbound","name":"cache"}]}],"volumes":[{"configMap":{"name":"unbound-config"},"name":"config"},{"name":"cache","persistentVolumeClaim":{"claimName":"unbound-cache-pvc"}},{"emptyDir":{},"name":"log"}]}}}}
+  creationTimestamp: "2026-04-22T15:07:57Z"
+  generation: 1
+  name: unbound
+  namespace: unbound
+  resourceVersion: "46949"
+  uid: cc551fa6-36bb-4454-8710-62b24ab4e529
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: unbound
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: unbound
+    spec:
+      containers:
+      - command:
+        - /usr/sbin/unbound
+        - -d
+        - -c
+        - /etc/unbound/unbound.conf
+        env:
+        - name: TZ
+          value: UTC
+        image: docker.io/library/unbound-custom:latest
+        imagePullPolicy: Never
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 53
+          timeoutSeconds: 2
+        name: unbound
+        ports:
+        - containerPort: 53
+          name: dns-tcp
+          protocol: TCP
+        - containerPort: 53
+          name: dns-udp
+          protocol: UDP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          tcpSocket:
+            port: 53
+          timeoutSeconds: 2
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - ALL
+          runAsGroup: 101
+          runAsUser: 100
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/unbound/unbound.conf
+          name: config
+          subPath: unbound.conf
+        - mountPath: /var/lib/unbound
+          name: cache
+        - mountPath: /var/log/unbound
+          name: log
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - chown -R 100:101 /var/lib/unbound
+        image: busybox:latest
+        imagePullPolicy: Always
+        name: volume-permissions
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/unbound
+          name: cache
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: unbound-config
+        name: config
+      - name: cache
+        persistentVolumeClaim:
+          claimName: unbound-cache-pvc
+      - emptyDir: {}
+        name: log
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2026-04-22T15:08:10Z"
+    lastUpdateTime: "2026-04-22T15:08:10Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  - lastTransitionTime: "2026-04-22T15:07:57Z"
+    lastUpdateTime: "2026-04-22T15:08:10Z"
+    message: ReplicaSet "unbound-c5c64cc77" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  observedGeneration: 1
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

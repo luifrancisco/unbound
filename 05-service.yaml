@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    haproxy.ingress.kubernetes.io/ipv6-expose: "true"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"haproxy.ingress.kubernetes.io/ipv6-expose":"true"},"name":"unbound","namespace":"unbound"},"spec":{"ports":[{"name":"dns-tcp","nodePort":30153,"port":53,"protocol":"TCP","targetPort":53},{"name":"dns-udp","nodePort":30153,"port":53,"protocol":"UDP","targetPort":53}],"selector":{"app":"unbound"},"type":"NodePort"}}
+  creationTimestamp: "2026-04-22T15:07:57Z"
+  name: unbound
+  namespace: unbound
+  resourceVersion: "46901"
+  uid: 181c4fcc-1a0f-482a-b1fd-6d48a92636dc
+spec:
+  clusterIP: 10.43.255.93
+  clusterIPs:
+  - 10.43.255.93
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: dns-tcp
+    nodePort: 30153
+    port: 53
+    protocol: TCP
+    targetPort: 53
+  - name: dns-udp
+    nodePort: 30153
+    port: 53
+    protocol: UDP
+    targetPort: 53
+  selector:
+    app: unbound
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}

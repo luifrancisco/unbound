@@ -1,0 +1,9 @@
+# Build context exclusions
+*.md
+.git
+.gitignore
+.dockerignore
+build.sh
+__pycache__
+*.pyc
+*.pyo
