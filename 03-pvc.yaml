@@ -21,7 +21,7 @@ spec:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 2Gi
+      storage: 512Mi
   storageClassName: local-path
   volumeMode: Filesystem
   volumeName: pvc-ca0adc58-f5fd-4a3b-b8ff-2c23d5cbcf61
@@ -29,5 +29,5 @@ status:
   accessModes:
   - ReadWriteOnce
   capacity:
-    storage: 2Gi
+    storage: 512Mi
   phase: Bound
