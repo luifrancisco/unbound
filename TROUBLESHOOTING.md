@@ -16,7 +16,6 @@
 3. Import into k3s
 4. Deploy
 5. Test DNS
-6. Test DNS
 
 ---
 
@@ -45,9 +44,6 @@ Fix: initContainer chown, or use emptyDir.
 ### 6. Operation not permitted on Port 53
 Cause: Missing NET_BIND_SERVICE capability.
 Fix: Add to securityContext.capabilities.
-
-Cause: Pod not Ready or capability missing.
-Fix: Verify pod Ready; ensure NET_BIND_SERVICE.
 
 ---
 
