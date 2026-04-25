@@ -30,3 +30,22 @@ jobs:
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/unbound:${{ github.ref_name }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/unbound:latest
           platforms: linux/amd64
+
+      - name: Sync README to Docker Hub
+        # Docker Hub does not auto-sync README from GitHub Actions pushes.
+        # This step explicitly updates the repository description via the API.
+        run: |
+          # Read README and prepare JSON payload
+          README_CONTENT=$(cat README.md | python3 -c "import sys, json; print(json.dumps(sys.stdin.read()))")
+          PAYLOAD=$(jq -n \
+            --arg desc "Lightweight recursive DNS resolver with caching, built on Alpine Linux" \
+            --arg full_desc "$README_CONTENT" \
+            '{full_description: $full_desc, description: $desc, full_name: "luis/unbound"}')
+
+          # Send PATCH request to Docker Hub API
+          curl -s -X PATCH \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.DOCKERHUB_TOKEN }}" \
+            -d "$PAYLOAD" \
+            "https://hub.docker.com/v2/repositories/luifrancisco/unbound/" \
+            | jq .
