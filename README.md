@@ -4,27 +4,13 @@ A lightweight, production-ready recursive DNS resolver with persistent cache, av
 
 ## Architecture
 
+Unbound runs as a Deployment in the `unbound` namespace with a PersistentVolumeClaim for cache storage.
 ```
-┌─────────────┐     ┌──────────────┐     ┌──────────────────┐
-│   Client     │────▶│  HAProxy     │────▶│   Unbound Pod    │
-│              │     │10.90.0.13:53 │     │  (unbound ns)    │
-└─────────────┘     └──────────────┘     └──────────────────┘
-                                                  │
-                                                  ▼
-                                          ┌─────────────────┐
-                                          │  Cache (PVC)    │
-                                          │  2Gi local-path │
-                                          └─────────────────┘
+Unbound Pod (unbound ns)
+├─ Cache: 512Mi PVC (local-path)
+├─ Port: 53 (with NET_BIND_SERVICE)
+└─ Image: luis/unbound:latest
 ```
-
-- **Deployment**: `unbound` in namespace `unbound` (1 replica)
-- **Service**: NodePort 30153 (TCP/UDP 53 → container port 5353 by default, overridden to 53 via ConfigMap in k3s)
-- **Image**: `luis/unbound:latest` (Docker Hub) / `unbound-custom:latest` (local build)
-- **Base**: Alpine 3.19 + Unbound 1.20.0 (11.9 MB)
-- **Cache**: 2Gi PVC with `local-path` storage class
-- **Security**: Non-root (UID 100), `NET_BIND_SERVICE` capability (k3s only)
-- **HAProxy**: Auto-configured via generator (backend: `be_unbound_30153`)
-
 ## Prerequisites
 
 ### Docker Hub (Standalone)
@@ -38,7 +24,6 @@ A lightweight, production-ready recursive DNS resolver with persistent cache, av
 - Cilium CNI in KPR mode
 - `kubectl` configured with cluster access
 - `podman` on the k3s master node (for building)
-- HAProxy with automatic NodePort → IPv6 mapping (optional, for IPv6 access)
 
 ## Quick Start
 
@@ -130,12 +115,11 @@ kubectl get pods -n unbound
 # Check service
 kubectl get svc -n unbound
 
-# Wait for HAProxy to regenerate (~30–60 seconds)
 sleep 30
 
 # Test DNS resolution
-dig @10.90.0.13 -p 30153 google.com +short
-dig @10.90.0.13 -p 30153 example.com AAAA  # IPv6 test
+dig @<node-ip> -p 30153 google.com +short
+dig @<node-ip> -p 30153 example.com AAAA  # IPv6 test
 ```
 
 Expected output: IP addresses for the queried domain.
@@ -146,9 +130,8 @@ Expected output: IP addresses for the queried domain.
 |------|----------|---------|
 | `01-namespace.yaml` | `Namespace` | Isolates resources in `unbound` |
 | `02-configmap.yaml` | `ConfigMap` | Unbound configuration (ACLs, cache, verbosity) |
-| `03-pvc.yaml` | `PersistentVolumeClaim` | 2Gi cache storage (local-path) |
+| `03-pvc.yaml` | `PersistentVolumeClaim` | 512Mi cache storage (local-path) |
 | `04-deployment.yaml` | `Deployment` | Unbound pod with security context & initContainer |
-| `05-service.yaml` | `Service` (NodePort 30153) | Exposes DNS with HAProxy annotation |
 | `k8s-deployment.yaml` | Combined | Legacy multi-document manifest (namespace, configmap, pvc, deployment) |
 | `k8s-service.yaml` | Service | Standalone service manifest |
 
@@ -171,7 +154,7 @@ Edit `unbound.conf` locally, then rebuild and redeploy.
 
 - **CPU**: 100m request / 500m limit
 - **Memory**: 128Mi request / 512Mi limit
-- **Cache**: 2Gi persistent volume
+- **Cache**: 512Mi persistent volume
 
 Adjust in `04-deployment.yaml` → `spec.template.spec.containers[0].resources`.
 
@@ -190,23 +173,15 @@ Change in `05-service.yaml` → `spec.ports[].nodePort`.
 - Privilege escalation disabled
 - PVC permissions fixed via initContainer (`busybox chown`)
 
-## HAProxy Integration
-
-The service annotation `haproxy.ingress.kubernetes.io/ipv6-expose: "true"` triggers the HAProxy generator (`/usr/local/bin/generate-haproxy-nodeport.py`) to create:
-
 ```
 backend be_unbound_30153
     server unbound_30153 172.16.0.XX:53 check
 ```
 
-The generator runs via systemd timer (~30–60s interval). After deployment, wait ~1 minute for HAProxy to pick up the new backend.
-
 **Manual trigger** (if needed):
 
 ```bash
-sudo systemctl restart generate-haproxy-nodeport.timer
 # or
-sudo /usr/local/bin/generate-haproxy-nodeport.py
 ```
 
 ## Troubleshooting
@@ -216,7 +191,6 @@ See [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) for:
 - Pod crash loops (missing `-d` flag, permission errors)
 - ImagePullBackOff (k3s containerd import required)
 - ConfigMap parsing errors (YAML block scalar vs literal)
-- HAProxy backend not appearing
 - Permission denied on port 53
 - PVC mount failures
 
@@ -273,7 +247,6 @@ rm -f /tmp/unbound.tar
 - **Unbound docs**: https://nlnetlabs.nl/documentation/unbound/
 - **k3s containerd**: `sudo k3s ctr -n k8s.io ...` (separate namespace from host)
 - **Local-path PV**: Rancher `local-path` provisioner (default in k3s)
-- **HAProxy generator**: `/usr/local/bin/generate-haproxy-nodeport.py` (systemd timer)
 
 ## License
 

@@ -15,7 +15,7 @@
 2. Tag for k3s containerd
 3. Import into k3s
 4. Deploy
-5. Wait for HAProxy detection
+5. Test DNS
 6. Test DNS
 
 ---
@@ -46,11 +46,6 @@ Fix: initContainer chown, or use emptyDir.
 Cause: Missing NET_BIND_SERVICE capability.
 Fix: Add to securityContext.capabilities.
 
-### 7. HAProxy Backend Not Created
-Cause: Service missing or annotation absent.
-Fix: Create NodePort Service with haproxy.ingress.kubernetes.io/ipv6-expose: "true"
-
-### 8. HAProxy Server DOWN
 Cause: Pod not Ready or capability missing.
 Fix: Verify pod Ready; ensure NET_BIND_SERVICE.
 
@@ -61,8 +56,7 @@ Fix: Verify pod Ready; ensure NET_BIND_SERVICE.
 - Image in k3s ctr
 - Deployment settings (imagePullPolicy, command, capabilities)
 - Service NodePort and selector
-- HAProxy config and stats
-- DNS tests (via HAProxy and direct to pod)
+- DNS tests (direct to pod or via load balancer)
 
 ---
 
@@ -79,7 +73,7 @@ Fix: Verify pod Ready; ensure NET_BIND_SERVICE.
 - Dockerfile — Alpine + Unbound 1.20, non-root UID 100
 - unbound.conf — Base config (mounted via ConfigMap)
 - k8s-deployment.yaml — With PVC, initContainer, security context
-- k8s-service.yaml — NodePort 30153 + HAProxy annotation
+- k8s-service.yaml — NodePort 30153
 - test.py — Local docker-compose validation
 - build.sh, Makefile, README.md, docker-compose.yml — standard project files
 
@@ -91,5 +85,4 @@ Fix: Verify pod Ready; ensure NET_BIND_SERVICE.
 | k3s | v1.34.6+k3s1 |
 | Cilium | v1.19.3 |
 | Unbound | 1.20.0-r2 (Alpine 3.19) |
-| HAProxy | 2.4.30 (Ubuntu 22.04) |
 | Storage | local-path |
