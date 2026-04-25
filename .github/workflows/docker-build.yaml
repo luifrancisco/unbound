@@ -1,4 +1,4 @@
-name: Docker Build and Push to Docker Hub
+name: Docker Build and Push to Docker Hub and GHCR
 
 on:
   push:
@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read  # For actions/checkout
+      packages: write  # For GHCR push (required)
 
     steps:
       - name: Checkout repository
@@ -21,7 +22,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build and push to Docker Hub
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -29,6 +30,23 @@ jobs:
           tags: |
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/unbound:${{ github.ref_name }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/unbound:latest
+          platforms: linux/amd64
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push to GHCR
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/unbound:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/unbound:latest
           platforms: linux/amd64
 
       - name: Sync README to Docker Hub
