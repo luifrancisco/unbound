@@ -1,16 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    deployment.kubernetes.io/revision: "1"
-    kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"unbound","namespace":"unbound"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"unbound"}},"template":{"metadata":{"labels":{"app":"unbound"}},"spec":{"containers":[{"command":["/usr/sbin/unbound","-d","-c","/etc/unbound/unbound.conf"],"env":[{"name":"TZ","value":"UTC"}],"image":"docker.io/library/unbound-custom:latest","imagePullPolicy":"Never","livenessProbe":{"failureThreshold":3,"initialDelaySeconds":15,"periodSeconds":10,"successThreshold":1,"tcpSocket":{"port":53},"timeoutSeconds":2},"name":"unbound","ports":[{"containerPort":53,"name":"dns-tcp","protocol":"TCP"},{"containerPort":53,"name":"dns-udp","protocol":"UDP"}],"readinessProbe":{"failureThreshold":3,"initialDelaySeconds":5,"periodSeconds":5,"successThreshold":1,"tcpSocket":{"port":53},"timeoutSeconds":2},"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}},"securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"add":["NET_BIND_SERVICE"],"drop":["ALL"]},"runAsGroup":101,"runAsUser":100},"volumeMounts":[{"mountPath":"/etc/unbound/unbound.conf","name":"config","subPath":"unbound.conf"},{"mountPath":"/var/lib/unbound","name":"cache"},{"mountPath":"/var/log/unbound","name":"log"}]}],"dnsPolicy":"ClusterFirst","initContainers":[{"command":["sh","-c","chown -R 100:101 /var/lib/unbound"],"image":"busybox:latest","imagePullPolicy":"Always","name":"volume-permissions","volumeMounts":[{"mountPath":"/var/lib/unbound","name":"cache"}]}],"volumes":[{"configMap":{"name":"unbound-config"},"name":"config"},{"name":"cache","persistentVolumeClaim":{"claimName":"unbound-cache-pvc"}},{"emptyDir":{},"name":"log"}]}}}}
-  creationTimestamp: "2026-04-22T15:07:57Z"
-  generation: 1
   name: unbound
   namespace: unbound
-  resourceVersion: "46949"
-  uid: cc551fa6-36bb-4454-8710-62b24ab4e529
 spec:
   progressDeadlineSeconds: 600
   replicas: 1
@@ -37,8 +29,8 @@ spec:
         env:
         - name: TZ
           value: UTC
-        image: docker.io/library/unbound-custom:latest
-        imagePullPolicy: Never
+        image: luifrancisco/unbound:latest
+        imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
           initialDelaySeconds: 15
@@ -118,22 +110,3 @@ spec:
           claimName: unbound-cache-pvc
       - emptyDir: {}
         name: log
-status:
-  availableReplicas: 1
-  conditions:
-  - lastTransitionTime: "2026-04-22T15:08:10Z"
-    lastUpdateTime: "2026-04-22T15:08:10Z"
-    message: Deployment has minimum availability.
-    reason: MinimumReplicasAvailable
-    status: "True"
-    type: Available
-  - lastTransitionTime: "2026-04-22T15:07:57Z"
-    lastUpdateTime: "2026-04-22T15:08:10Z"
-    message: ReplicaSet "unbound-c5c64cc77" has successfully progressed.
-    reason: NewReplicaSetAvailable
-    status: "True"
-    type: Progressing
-  observedGeneration: 1
-  readyReplicas: 1
-  replicas: 1
-  updatedReplicas: 1
